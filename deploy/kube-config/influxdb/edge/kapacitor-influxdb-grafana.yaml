@@ -1,0 +1,53 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kig
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kig
+    spec:
+      containers:
+      #####################################
+      # KAPACITOR
+      #####################################
+      #- name: kapacitor
+      #  image: feelobot/kapacitor:0.12.0-1
+      #  imagePullPolicy: Always
+      #  ports:
+      #    - containerPort: 9092
+      #      name: statsdport
+      #  env:
+      #    - name: INFLUXDB_URL
+      #      value: localhost:8086
+      #####################################
+      # INFLUXDB
+      #####################################
+      - name: influxdb
+        image: "tutum/influxdb:0.12"
+        ports:
+        - containerPort: 8083
+        - containerPort: 8086
+        resources:
+          requests:
+            memory: "20Gi" # Recommended
+            cpu: "8" # Recommended
+          limits:
+            memory: "40Gi" # Recommended to protect against memory leaks
+        env:
+        - name: PRE_CREATE_DB
+          value: "k8s"
+        imagePullPolicy: "Always"
+      #####################################
+      # GRAFANA
+      #####################################
+      - name: "grafana"
+        image: "grafana/grafana:3.0.0-beta3"
+        env:
+        # USE KUBERNETES SECRETS TO SET VALUE FOR ADMIN PASSWORD
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          value: "admin"
+        ports:
+        - containerPort: 3000
